@@ -2,7 +2,7 @@
 
 Spring Boot WebFlux service for AES encryption and decryption using `AES/GCM/NoPadding`.
 
-The service keeps the small API surface of the existing Triple-DES project, but uses a cleaner router-handler WebFlux design with explicit application ports, an outbound AES-GCM adapter, centralized error mapping, traceable logs, and focused tests.
+The service keeps the small API surface, uses a cleaner router-handler WebFlux design with explicit application ports, an outbound AES-GCM adapter, centralized error mapping, traceable logs, and focused tests.
 
 ## Technology
 
