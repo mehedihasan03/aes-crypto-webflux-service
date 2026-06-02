@@ -11,5 +11,5 @@ public record DecryptRequest(
 
         @NotBlank(message = "iv is required for AES-GCM decryption")
         String iv
-) {
+) implements CryptoRequest {
 }

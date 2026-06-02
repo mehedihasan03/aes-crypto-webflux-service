@@ -4,6 +4,7 @@ import net.celloscope.aes.domain.model.CryptoCommand;
 import net.celloscope.aes.domain.model.CryptoOperationResult;
 import net.celloscope.aes.application.port.out.CryptoProvider;
 import org.junit.jupiter.api.Test;
+import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 
 class AesCryptoServiceTest {
@@ -11,7 +12,7 @@ class AesCryptoServiceTest {
     @Test
     void encryptDelegatesToProviderAndReturnsReactiveResult() {
         CryptoProvider provider = new StubCryptoProvider();
-        AesCryptoService service = new AesCryptoService(provider);
+        AesCryptoService service = new AesCryptoService(provider, Schedulers.immediate());
 
         StepVerifier.create(service.encrypt(new CryptoCommand("plain", "0123456789abcdef", null)))
                 .expectNext(new CryptoOperationResult("ciphertext", "AES/GCM/NoPadding", "generated-nonce", 128))
@@ -21,7 +22,7 @@ class AesCryptoServiceTest {
     @Test
     void decryptDelegatesToProviderAndReturnsReactiveResult() {
         CryptoProvider provider = new StubCryptoProvider();
-        AesCryptoService service = new AesCryptoService(provider);
+        AesCryptoService service = new AesCryptoService(provider, Schedulers.immediate());
 
         StepVerifier.create(service.decrypt(new CryptoCommand("ciphertext", "0123456789abcdef", "nonce")))
                 .expectNext(new CryptoOperationResult("plaintext", "AES/GCM/NoPadding", "nonce", 128))

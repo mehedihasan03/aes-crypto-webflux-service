@@ -13,14 +13,14 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
-class CryptoControllerIntegrationTest {
+class CryptoRouterIntegrationTest {
 
     private static final String AES_256_KEY = "0123456789abcdef0123456789abcdef";
 
     private final WebTestClient webTestClient;
 
     @Autowired
-    CryptoControllerIntegrationTest(WebTestClient webTestClient) {
+    CryptoRouterIntegrationTest(WebTestClient webTestClient) {
         this.webTestClient = webTestClient;
     }
 
@@ -71,5 +71,64 @@ class CryptoControllerIntegrationTest {
                 .jsonPath("$.status").isEqualTo(400)
                 .jsonPath("$.message").isEqualTo("Request validation failed")
                 .jsonPath("$.details").isArray();
+    }
+
+    @Test
+    void missingDecryptIvReturnsValidationError() {
+        webTestClient.post()
+                .uri("/api/v1/crypto/aes/decrypt")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of(
+                        "data", "ciphertext",
+                        "secretKey", AES_256_KEY
+                ))
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(400)
+                .jsonPath("$.message").isEqualTo("Request validation failed")
+                .jsonPath("$.details[0]").isEqualTo("iv: iv is required for AES-GCM decryption");
+    }
+
+    @Test
+    void invalidSecretKeyLengthReturnsBadRequest() {
+        webTestClient.post()
+                .uri("/api/v1/crypto/aes/encrypt")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of(
+                        "data", "Hello from WebFlux",
+                        "secretKey", "short-key"
+                ))
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(400)
+                .jsonPath("$.message").isEqualTo("secretKey must be 16, 24, or 32 UTF-8 bytes for AES");
+    }
+
+    @Test
+    void invalidJsonReturnsBadRequest() {
+        webTestClient.post()
+                .uri("/api/v1/crypto/aes/encrypt")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(400)
+                .jsonPath("$.message").isEqualTo("Request body must be valid JSON");
+    }
+
+    @Test
+    void nonJsonContentTypeReturnsUnsupportedMediaType() {
+        webTestClient.post()
+                .uri("/api/v1/crypto/aes/encrypt")
+                .contentType(MediaType.TEXT_PLAIN)
+                .bodyValue("Hello from WebFlux")
+                .exchange()
+                .expectStatus().isEqualTo(415)
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(415)
+                .jsonPath("$.message").isEqualTo("Content-Type must be application/json");
     }
 }

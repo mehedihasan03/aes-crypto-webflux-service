@@ -11,5 +11,5 @@ public record EncryptRequest(
         String secretKey,
 
         String iv
-) {
+) implements CryptoRequest {
 }
